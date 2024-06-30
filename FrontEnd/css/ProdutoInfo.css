@@ -1,0 +1,76 @@
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+}
+
+.product-panel {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.product-panel:hover {
+    transform: translateY(-5px);
+}
+
+.product-panel h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 24px;
+}
+
+.product-info {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-info label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.product-info span {
+    color: #777;
+    font-size: 16px;
+}
+
+.button-spacing {
+    margin-top: 20px;
+}
+
+.product-panel button {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease;
+}
+
+.product-panel button:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+}
+
+.sem-estoque {
+    color: gray;
+    font-size: 16px;
+}

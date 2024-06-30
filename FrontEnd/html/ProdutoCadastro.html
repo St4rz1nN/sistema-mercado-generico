@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <script src="../../BackEnd/utils/SessionCheck.js"></script>
+</head>
+<body>
+    <div class="container">
+        <form id="principal-form" class="input-form">
+            <h2 id = "labelprincipal">CADASTRO OU EDIT</h2>
+            <label for="id">ID Produto:</label>
+            <label for="id" id="idproduto">INDEFINIDO</label>
+            <div class="button-spacing"></div>
+            <label for="nome">Nome do Produto:</label>
+            <input type="text" id="nome" name="nome" required>
+            <label for="descricao">Descrição do Produto:</label>
+            <textarea id="desc" name="descricao" rows="4" required></textarea>
+            <label for="valor">Valor do Produto (R$):</label>
+            <input type="number" id="valor" name="valor" step="0.01" min="0" required>
+            <label for="estoque">Estoque do Produto:</label>
+            <input type="number" id="estoque" name="estoque" step="0.01" min="0" required>
+            <div class="button-spacing"></div>
+            <button type="submit" id="buttonprincipal">Cadastrar/Edit Produto</button>
+        </form>
+    </div>
+
+    <script>
+
+        let produtoID;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SessaoAtiva = await checkUsuarioSession();
+            if(SessaoAtiva === false){
+                return;
+            }
+            try {
+                const response = await fetch('http://127.0.0.1:3000/permissao/checkUsuarioPermissao/1', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                console.log(data); 
+
+                if(data === false){
+                    window.location.href = './Principal.html';
+                    alert("Você não tem permissão de entrar nessa aba!");
+                    return;
+                }
+            } catch (error) {
+                console.error('Erro ao obter permissão do usuario: ', error);
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:3000/produto/get', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                const labelprincipal = document.getElementById('labelprincipal');
+                const buttonprincipal = document.getElementById('buttonprincipal');
+
+                produtoID = data;
+
+                const labelid = document.getElementById('idproduto');
+
+                if (data == -1) {
+                    labelprincipal.textContent = "Cadastrar Produto"
+                    buttonprincipal.textContent = "Cadastrar Produto"
+                } else {
+                    labelprincipal.textContent = "Editar Produto"
+                    buttonprincipal.textContent = "Editar Produto"
+                    labelid.textContent = `${produtoID}`;
+                    try {
+                        const response = await fetch(`http://127.0.0.1:3000/produto/getByID/${produtoID}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include'
+                        });
+
+                        const data = await response.json();
+
+                        let nome = document.getElementById('nome');
+                        let descricao = document.getElementById('desc');
+                        let valor = document.getElementById('valor');
+                        let estoque = document.getElementById('estoque');
+
+                        if(data){
+                            data.forEach(product => {
+                                nome.value = product.nome;
+                                descricao.textContent = product.descricao;
+                                valor.value = product.preco;
+                                estoque.value = product.estoque;
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Erro ao obter informações do produto edit: ', error);
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao obter informações do produto edit: ', error);
+            }
+            
+        });
+
+        document.getElementById('buttonprincipal').addEventListener('click', async (event) => {
+            event.preventDefault();
+            const target = event.target;
+                
+            if (target.tagName.toLowerCase() === 'button') {
+                const buttonprincipal = document.getElementById('buttonprincipal');
+                if (buttonprincipal.textContent == "Cadastrar Produto"){
+                    console.log("Cadastro de Produto");
+                    try {
+                        const nome = document.getElementById('nome').value;
+                        const descricao = document.getElementById('desc').value;
+                        const preco = document.getElementById('valor').value;
+                        const estoque = document.getElementById('estoque').value;
+
+                        if (!nome || !descricao || !preco || !estoque) {
+                            alert("Por favor, preencha todos os campos.");
+                            return;
+                        }
+                        console.log("TESTE1");
+                        const response = await fetch('http://127.0.0.1:3000/produto/cadastrar', {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({ nome, descricao, preco, estoque })
+                        });
+
+                        console.log("TESTE2");
+
+                        const message = await response.json();
+                        console.log('Message: ' + message);
+                        alert(message);
+
+                        console.log("TESTE3")
+
+                    } catch (error) {
+                        console.log('Erro ao fazer cadastro de produto: ', error);
+                    }
+
+                } else{
+                    console.log("Edit de Produto");
+
+                    try {
+                        const id = produtoID;
+                        const nome = document.getElementById('nome').value;
+                        const descricao = document.getElementById('desc').value;
+                        const preco = document.getElementById('valor').value;
+                        const estoque = document.getElementById('estoque').value;
+
+                        if (!nome || !descricao || !preco || !estoque) {
+                            alert("Por favor, preencha todos os campos.");
+                            return;
+                        }
+                        const response = await fetch('http://127.0.0.1:3000/produto/editar', {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include', // Adicionado para incluir cookies
+                            body: JSON.stringify({ id, nome, descricao, preco, estoque })
+                        });
+
+                        const message = await response.json();
+                        alert(message);
+                    } catch (error) {
+                        console.log('Erro ao fazer edição de produto: ', error);
+                    }
+
+                }
+            }
+        });
+    </script>
+</body>
+
+
+</html>

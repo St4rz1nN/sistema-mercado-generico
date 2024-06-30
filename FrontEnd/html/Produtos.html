@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Produtos</title>
+    <link rel="stylesheet" href="../css/Produtos.css">
+    <script src="../../BackEnd/utils/SessionCheck.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Lista de Produtos</h2>
+        <input type="text" id="barra-pesquisa" placeholder="Pesquisar produtos...">
+        <span id="char-count">0 caracteres</span>
+        <ul id="product-list"></ul>
+    </div>
+
+    <script>
+        let admin;
+        let produtosTotal = [];
+        let produtos = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SessaoAtiva = await checkUsuarioSession();
+            if(SessaoAtiva === false){
+                return;
+            }
+            try {
+                const response = await fetch('http://127.0.0.1:3000/permissao/checkUsuarioPermissao/1', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                if(data.error){
+                    console.log('Erro ao obter permissão do usuario: ', data.error);
+                }
+                else if(data.results === true){
+                    admin = true;
+                }
+
+            } catch (error) {
+                console.error('Erro ao obter permissão do usuario: ', error);
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:3000/produto/listar', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (data) {
+                    produtosTotal = data;
+                    carregarProdutos(data);
+                } else {
+                    alert('Erro: Erro ao listar Produtos.');
+                }
+            } catch (error) {
+                console.log('Erro ao obter informações dos produtos: ', error);
+            }
+        });
+
+        document.getElementById('barra-pesquisa').addEventListener('input', (event) => {
+            let produtosFiltrados = [];
+            const textoInserido = event.target.value.toLowerCase();
+
+            let lenght = textoInserido.length
+            if (lenght < 1){
+                produtosFiltrados = produtosTotal;
+            } else{
+                produtosFiltrados = produtos.filter(produto =>
+                    produto.nome.toLowerCase().includes(textoInserido)
+                );
+            }
+            document.getElementById('char-count').textContent = `${lenght} caracteres`
+            carregarProdutos(produtosFiltrados);
+        })
+
+        function carregarProdutos(data){
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = '';
+            produtos = [];
+            let produtosSemEstoque  = [];
+            data.forEach(product => {
+                if (product.estoque === 0) {
+                    produtosSemEstoque.push(product);
+                } else{
+                    produtos.push(product);
+                }
+            });
+            produtosSemEstoque.forEach(product => {
+                produtos.push(product);
+            });
+            produtos.forEach(product => {
+                let productId = product.id;
+                const listItem = document.createElement('li')
+
+                const productButton = document.createElement('div');
+                productButton.classList.add('product-button');
+                productButton.setAttribute('product-id', product.id);
+
+                const productInfo = document.createElement('span');
+                productInfo.textContent = `${product.nome} - R$${product.preco.toFixed(2)}`;
+                productInfo.classList.add('product-info');
+                productInfo.setAttribute('product-id', product.id);
+                
+                if (product.estoque === 0) {
+                    productInfo.classList.add('sem-estoque');
+                }
+
+                productButton.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    const productId = event.target.getAttribute('product-id');
+                    console.log('ID Produto: ' + productId);
+                    try{
+                        const response = await fetch(`http://127.0.0.1:3000/produto/selecionar/${productId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include' 
+                        });
+                        if (response.ok) {
+                            window.location.href = "./ProdutoInfo.html";
+                        } else {
+                            console.log('Erro ao selecionar o produto para informações');
+                        }
+                    }catch(error){
+                        console.error('Erro ao fazer a requisição:', error);
+                    }
+                });
+                productButton.appendChild(productInfo);
+                if(admin){
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Editar';
+                    editButton.classList.add('remove-button');
+                    editButton.setAttribute('product-id', product.id);
+
+
+                    editButton.addEventListener('click', async (event) => {
+                        event.stopPropagation();
+                        const productId = event.target.getAttribute('product-id');
+                        try {
+                            const response = await fetch(`http://127.0.0.1:3000/produto/selecionar/${productId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                credentials: 'include',
+                                body: JSON.stringify({ id: productId })
+                            });
+                        } catch (error) {
+                            console.log('Erro ao clicar no botão de edit: ', error);
+                        }
+                        window.location.href = './ProdutoCadastro.html';
+                    });
+
+
+                    const apagarButton = document.createElement('button');
+                    apagarButton.textContent = 'Apagar';
+                    apagarButton.classList.add('remove-button');
+                    apagarButton.setAttribute('product-id', product.id);
+
+                    apagarButton.addEventListener('click', async (event) => {
+                        event.stopPropagation();
+                        const productId = event.target.getAttribute('product-id');
+                        try {
+                            const response = await fetch(`http://127.0.0.1:3000/produto/remover/${productId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                credentials: 'include'
+                            });
+                            
+                            const data = await response.json();
+                            alert(data);
+                            window.location.href = './Produtos.html';
+                        } catch (error) {
+                            console.log('Erro ao clicar no botão de apagar: ', error);
+                        }
+                    });
+                    productButton.appendChild(apagarButton);
+                    productButton.appendChild(editButton);
+                }
+                listItem.appendChild(productButton);
+                productList.appendChild(listItem);
+            });
+
+        }
+    </script>
+</body>
+</html>

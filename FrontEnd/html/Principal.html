@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <script src="../../BackEnd/utils/SessionCheck.js"></script>
+</head>
+<body>
+    <div class="container">
+        <form id="principal-form" class="input-form">
+            <h2>Olá <span id="user-name">NOME</span></h2>
+            <button type="button" id="ver-produtos">Ver Produtos</button>
+            <div class="button-spacing"></div>
+            <button type="button" id="ver-carrinho">Ver Carrinho</button>
+            <div class="button-spacing"></div>
+            <button type="button" id="ver-compras">Ver Compras</button>
+            <div class="button-spacing"></div>
+            <button type="button" id="ver-endereco">Ver Endereço</button>
+            <div class="button-spacing"></div>
+            <button type="button" id="cadastrar-produtos" style="display: none;">Cadastrar Produtos</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SessaoAtiva = await checkUsuarioSession();
+            if(SessaoAtiva === false){
+                return;
+            }
+            try {
+                const response = await fetch('http://127.0.0.1:3000/usuario/info', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Adicionado para incluir cookies
+                });
+
+                const data = await response.json();
+                const userNameSpan = document.getElementById('user-name');
+                
+                if (data.success) {
+                    userNameSpan.textContent = data.user.nome;
+                } else {
+                    alert('Erro: Usuário não está logado. ' + data.success);
+                }
+            } catch (error) {
+                console.error('Erro ao obter informações do usuário: ', error);
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:3000/permissao/checkUsuarioPermissao/1', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Adicionado para incluir cookies
+                });
+
+                const data = await response.json();
+                console.log(data.results);
+                const cadastrarProdutos = document.getElementById('cadastrar-produtos');
+
+                if(data.results === true){
+                    cadastrarProdutos.style.display = "block";
+                }
+            } catch (error) {
+                console.error('Erro ao obter permissão do usuario: ', error);
+            }
+        });
+
+        document.getElementById('ver-produtos').addEventListener('click', () => {
+            window.location.href = './Produtos.html';
+        });
+
+        document.getElementById('ver-carrinho').addEventListener('click', () => {
+            window.location.href = './Carrinho.html';
+        });
+
+        document.getElementById('ver-compras').addEventListener('click', () => {
+            window.location.href = './Compra.html';
+        });
+
+        document.getElementById('ver-endereco').addEventListener('click', () => {
+            window.location.href = './Endereco.html';
+        });
+
+        document.getElementById('cadastrar-produtos').addEventListener('click', async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:3000/produto/selecionar/-1', {
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Adicionado para incluir cookies
+                });
+            } catch (error) {
+                console.log('Erro ao salvar informações do produto cadastro: ', error);
+            }
+            window.location.href = './ProdutoCadastro.html';
+        });
+    </script>
+</body>
+</html>

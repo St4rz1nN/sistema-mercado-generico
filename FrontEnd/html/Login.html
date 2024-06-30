@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+    <div class="container">
+        <form id="login-form" class="input-form">
+            <h2>Login</h2>
+            <input id="email" type="email" placeholder="Email" required>
+            <input id="senha" type="password" placeholder="Senha" required>
+            <button type="button" onclick="fazerLogin()">Logar</button>
+            <div class="button-spacing"></div>
+            <button type="button" onclick="paginaCadastrar()">Cadastrar</button>
+        </form>
+    </div>
+    <script>
+        function fazerLogin() {
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+
+            fetch('http://127.0.0.1:3000/usuario/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include', // Adicionado para incluir cookies
+                body: JSON.stringify({ email, senha })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(er => {
+                        const { message }  = er;
+                        throw new Error("Erro: " + message);
+                    });
+                } else {
+                    return response.json();
+                }
+            })
+            .then(data => {
+                const { success, message } = data; // Desestrutura o objeto JSON para acessar suas propriedades
+
+                if (success) {
+                    // Login bem-sucedido
+                    // Faça qualquer ação necessária, como redirecionar para outra página ou exibir uma mensagem de sucesso
+                    alert(message);
+                    window.location.href="./Principal.html";
+                } else {
+                    // Login falhou
+                    // Exiba uma mensagem de erro para o usuário
+                    console.error("Login falhou: ", message);
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+        
+        function paginaCadastrar() {
+            window.location.href = "./Cadastro.html";
+        }
+    </script>
+</body>
+</html>

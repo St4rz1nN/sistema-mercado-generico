@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compra Info</title>
+    <link rel="stylesheet" href="../css/Produtos.css">
+    <script src="../../BackEnd/utils/SessionCheck.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2 id="labelprincipal">Compra De ID</h2>
+        <ul id="compra-list"></ul>
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SessaoAtiva = await checkUsuarioSession();
+            if(SessaoAtiva === false){
+                return;
+            }
+            try {
+                const response = await fetch(`http://127.0.0.1:3000/compra/get`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Adicionado para incluir cookies
+                });
+
+                let data = await response.json();
+                const compraList = document.getElementById('compra-list');
+                let compras = data.resultado;
+                let IDCompra = data.compraid;
+                
+                document.getElementById('labelprincipal').textContent = `Compra de ID: ${IDCompra}`
+                if (data.error) {
+                    alert('Erro: Erro ao listar Compras.');
+                } else {
+                    for (const id in compras) {
+                        if (Object.prototype.hasOwnProperty.call(compras, id)) {
+                            const compra = compras[id];
+                            let nomeProduto;
+                            try{
+                                let responseProduto = await fetch(`http://127.0.0.1:3000/produto/getByID/${compra.idproduto}`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    credentials: 'include' // Adicionado para incluir cookies
+                                });
+
+                                let dataProduto = await responseProduto.json();
+
+                                nomeProduto = dataProduto[0].nome;
+
+                            }catch(error){
+                                console.error('Erro ao obter Produtos por ID: ', error);
+                            }
+                            // Obtém o objeto de compra correspondente ao ID atual
+
+                            // Cria um botão para cada compra
+                            const button = document.createElement('button');
+                            button.textContent = `${nomeProduto} - x${compra.quantia}`;
+                            button.classList.add('product-button');
+                            compraList.appendChild(button);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao obter lista de Compras: ', error);
+            }
+        });
+    </script>
+</body>
+</html>

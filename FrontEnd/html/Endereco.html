@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <script src="../../BackEnd/utils/SessionCheck.js"></script>
+</head>
+<body>
+    <div class="container">
+        <form id="principal-form" class="input-form">
+            <h2 id = "labelprincipal">CADASTRO OU EDIT</h2>
+            <div class="button-spacing"></div>
+            <label for="cep">cep:</label>
+            <input type="text" id="cep" name="cep" required>
+            <label for="estado">Estado:</label>
+            <input type="text" id="estado" name="estado" required>
+            <label for="cidade">Cidade:</label>
+            <input type="text" id="cidade" name="cidade" required>
+            <label for="bairro">Bairro:</label>
+            <input type="text" id="bairro" name="bairro" required>
+            <label for="rua">Rua:</label>
+            <input type="text" id="rua" name="rua" required>
+            <label for="numero">Numero:</label>
+            <input type="number" id="numero" name="numero" step="0.01" min="0" required>
+            <label for="complemento">Complemento:</label>
+            <input type="text" id="complemento" name="complemento" required>
+            <div class="button-spacing"></div>
+            <button type="submit" id="buttonprincipal">Cadastrar/Edit Endereco</button>
+        </form>
+    </div>
+
+    <script>
+        let enderecoCadastrado;
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SessaoAtiva = await checkUsuarioSession();
+            if(SessaoAtiva === false){
+                return;
+            }
+            try {
+                const response = await fetch('http://127.0.0.1:3000/endereco/get/-1', {
+                    method: 'get',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Adicionado para incluir cookies
+                });
+                
+                data = await response.json();
+
+                console.log(data);
+
+                const labelprincipal = document.getElementById("labelprincipal")
+                const labelbutton = document.getElementById("buttonprincipal")
+                if(data === false){
+                    labelprincipal.textContent = "Cadastrar Endereço";
+                    labelbutton.textContent = "Cadastrar Endereço";
+                }else{
+                    enderecoCadastrado = true;
+                    const cep = document.getElementById("cep");
+                    const estado = document.getElementById("estado");
+                    const cidade = document.getElementById("cidade");
+                    const bairro = document.getElementById("bairro");
+                    const rua = document.getElementById("rua");
+                    const numero = document.getElementById("numero");
+                    const complemento = document.getElementById("complemento");
+                    
+                    labelprincipal.textContent = "Editar Endereço";
+                    labelbutton.textContent = "Editar Endereço";
+
+                    data.forEach(endereco => {
+                        cep.value = endereco.cep;
+                        estado.value = endereco.estado;
+                        cidade.value = endereco.cidade;
+                        bairro.value = endereco.bairro;
+                        rua.value = endereco.rua;
+                        numero.value = endereco.numero;
+                        complemento.value = endereco.complemento;
+                    });
+                }
+
+            } catch (error) {
+                console.log('Erro ao puxar o Endereco do Usuario: ', error);
+            }
+        });
+
+        document.getElementById(`buttonprincipal`).addEventListener('click', async () => {
+            event.preventDefault();
+
+            const cep = document.getElementById("cep").value;
+            const estado = document.getElementById("estado").value;
+            const cidade = document.getElementById("cidade").value;
+            const bairro = document.getElementById("bairro").value;
+            const rua = document.getElementById("rua").value;
+            const numero = document.getElementById("numero").value;
+            const complemento = document.getElementById("complemento").value;
+
+            if (!cep || !estado || !cidade || !bairro || !rua || !numero || !complemento) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
+            if(enderecoCadastrado){
+
+                try {
+                    const response = await fetch('http://127.0.0.1:3000/endereco/editar', {
+                        method: 'post',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include', // Adicionado para incluir cookies
+                        body: JSON.stringify({ cep, estado, cidade, bairro, rua, numero, complemento })
+                    });
+                    
+                    data = await response.json();
+
+                    alert(data);
+
+                } catch (error) {
+                    console.log('Erro ao editar o Endereco do Usuario: ', error);
+                }
+            }else{
+
+                try {
+                    const response = await fetch('http://127.0.0.1:3000/endereco/cadastrar', {
+                        method: 'post',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include', // Adicionado para incluir cookies
+                        body: JSON.stringify({ cep, estado, cidade, bairro, rua, numero, complemento })
+                    });
+
+                    
+                    data = await response.json();
+
+                    alert(data);
+
+                    window.location.href = './Endereco.html';
+
+                } catch (error) {
+                    console.log('Erro ao Cadastrar o Endereco do Usuario: ', error);
+                }
+            }
+        });
+    </script>
+</body>
+
+
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Produtos</title>
+    <link rel="stylesheet" href="../css/Produtos.css">
+    <script src="../../BackEnd/utils/SessionCheck.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Lista de Compras</h2>
+        <ul id="compra-list"></ul>
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SessaoAtiva = await checkUsuarioSession();
+            if(SessaoAtiva === false){
+                return;
+            }
+            try {
+                const response = await fetch('http://127.0.0.1:3000/compra/getcompras', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Adicionado para incluir cookies
+                });
+
+                const data = await response.json();
+                const compraList = document.getElementById('compra-list');
+                
+                console.log(data);
+
+                if (data.error) {
+                    alert('Erro: Erro ao listar Compras.');
+                } else {
+                    for (const id in data) {
+                        if (Object.prototype.hasOwnProperty.call(data, id)) {
+                            // Obtém o array de compras correspondente ao ID atual
+                            const button = document.createElement('button');
+                            button.textContent = `Compra de ID: ${id}`;
+                            button.setAttribute('compra-id', id);
+                            button.classList.add('product-button');
+                            compraList.appendChild(button);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao obter lista de Compras: ', error);
+            }
+        });
+
+        document.getElementById('compra-list').addEventListener('click', async () => {
+            const target = event.target;
+            if (target.tagName.toLowerCase() === 'button') {
+                const compraId = event.target.getAttribute('compra-id');
+                console.log('Compra ID: ' + compraId);
+                try{
+                    const response = await fetch(`http://127.0.0.1:3000/compra/selecionar/${compraId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include' // Adicionado para incluir cookies
+                    });
+                }catch(error){
+                    console.log('Erro ao fazer a requisição:', error);
+                }
+                window.location.href = "./CompraInfo.html";
+            }
+        });
+    </script>
+</body>
+</html>

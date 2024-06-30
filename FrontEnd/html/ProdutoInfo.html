@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal</title>
+    <link rel="stylesheet" href="../css/ProdutoInfo.css">
+    <script src="../../BackEnd/utils/SessionCheck.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="product-panel">
+            <h2>Informações do Produto</h2>
+            <div class="product-info">
+                <label for="nome">Nome do Produto:</label>
+                <span id="nome">Nome do Produto</span>
+            </div>
+            <div class="product-info">
+                <label for="descricao">Descrição do Produto:</label>
+                <span id="desc">Descrição do Produto</span>
+            </div>
+            <div class="product-info">
+                <label for="valor">Valor do Produto (R$):</label>
+                <span id="preco">0.00</span>
+            </div>
+            <div class="product-info">
+                <label for="estoque">Estoque:</label>
+                <span id="estoque">0</span>
+            </div>
+            <div class="button-spacing"></div>
+            <button type="button" id = "addcarrinho" >Adicionar ao Carrinho</button>
+        </div>
+    </div>
+
+    <script>
+        let estoquequantia;
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SessaoAtiva = await checkUsuarioSession();
+            if(SessaoAtiva === false){
+                return;
+            }
+            try {
+                let response = await fetch('http://127.0.0.1:3000/produto/get', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                const produtoID = await response.json();
+
+                console.log("Produto ID: " + produtoID);
+
+                try {
+                    let response = await fetch(`http://127.0.0.1:3000/produto/getByID/${produtoID}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include'
+                    });
+
+                    const data = await response.json();
+
+                    const nome = document.getElementById('nome');
+                    const desc = document.getElementById('desc');
+                    const preco = document.getElementById('preco');
+                    const estoque = document.getElementById('estoque');
+
+                    
+                    console.log(data);
+
+                    data.forEach(data => {
+                        
+                        nome.textContent = data.nome;
+                        desc.textContent = data.descricao;
+                        preco.textContent = data.preco;
+                        estoque.textContent = data.estoque;
+                        document.getElementById('addcarrinho').setAttribute('product-id', data.id);
+
+                        if(data.estoque === 0){
+                            estoquequantia = 0;
+                            document.getElementById('addcarrinho').textContent = "Sem Estoque";
+                            document.getElementById('addcarrinho').classList.add('sem-estoque');
+                        }
+                    });
+                } catch (error) {
+                    console.error('Erro ao obter informações dos produtos: ', error);
+                }
+            } catch (error) {
+                console.error('Erro ao obter ID do produto: ', error);
+            }
+            
+        });
+
+        document.getElementById('addcarrinho').addEventListener('click', async (event) => {
+            const target = event.target;
+            if (target.tagName.toLowerCase() === 'button') {
+                if(estoquequantia === 0){
+                    alert("Produto Sem Estoque No Momento!")
+                    return;
+                }
+                const productId = event.target.getAttribute('product-id');
+                console.log("ID: " + productId)
+                try {
+                    const response = await fetch(`http://127.0.0.1:3000/carrinho/adicionar/${productId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ id: productId })
+                    });
+                    
+                    const message = await response.text();
+                    alert(message);
+                    window.location.href = './ProdutoInfo.html';
+                } catch (error) {
+                    console.log('Erro ao Adicionar o produto: ', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
